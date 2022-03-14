@@ -1,29 +1,23 @@
 public class Main {
 
     public static int[][] multiply(int[][] a, int[][] b) {
-        if (a == null || a.length == 0 || a[0] == null || a[0].length == 0) {
-            throw new IllegalArgumentException("a");
+        int threadsNumber = Runtime.getRuntime().availableProcessors();
+        int length = a.length;
+        int[][] result = new int[length][b[0].length];
+        if (threadsNumber > length) {
+            threadsNumber = length;
         }
-        if (b == null || b.length == 0 || b[0] == null || b[0].length == 0) {
-            throw new IllegalArgumentException("b");
-        }
-        if (a[0].length != b.length) {
-            throw new IllegalArgumentException("Matrices are inconsistent");
-        }
-        int threadsNumber = 8;
-        int m = a.length;
-        int[][] result = new int[m][b[0].length];
-        if (threadsNumber > m) {
-            threadsNumber = m;
-        }
-        int count = m / threadsNumber;
-        int additional = m % threadsNumber;
+        int count = length / threadsNumber;
+        int extra = length % threadsNumber;
         Thread[] threads = new Thread[threadsNumber];
         int start = 0;
         for (int i = 0; i < threadsNumber; i++) {
-            int cnt = ((i == 0) ? count + additional : count);
-            threads[i] = new MultiplyThread(a, b, result, start, start + cnt - 1);
-            start += cnt;
+            int end = start + count;
+            if (i == 0) {
+                end += extra;
+            }
+            threads[i] = new MultiplyThread(a, b, result, start, end - 1);
+            start = end;
             threads[i].start();
         }
         try {
@@ -36,17 +30,27 @@ public class Main {
         return result;
     }
 
-
-    public static void main(String[] args) {
-        int[][] a = {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
-        int[][] b = {{2, 1, 2, 1, 2, 1, 2}, {1, 2, 1, 2, 1, 2, 1}, {2, 1, 2, 1, 2, 1, 2}, {1, 2, 1, 2, 1, 2, 1}};
-        int[][] c = multiply(a, b);
-
-        for (int[] ints : c) {
-            for (int anInt : ints) {
-                System.out.print(anInt + " ");
+    public static void printMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int element : row) {
+                System.out.print(element + " ");
             }
             System.out.println();
         }
+    }
+
+    public static void main(String[] args) {
+        int[][] a = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+        int[][] b = {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
+        int[][] c = multiply(a, b);
+
+        /*
+         * result:
+         * 38 44 50 56
+         * 83 98 113 128
+         * 128 152 176 200
+         * */
+        printMatrix(c);
+
     }
 }
